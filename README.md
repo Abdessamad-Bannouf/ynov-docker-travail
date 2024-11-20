@@ -8,33 +8,42 @@ Ce guide décrit comment configurer un environnement **Frontend** en Angular, **
 
 Assurez-vous que **Docker** est installé sur votre machine.
 
-## 📂 Configuration du Docker
+## 📂 Configuration du dossier db pour la database
 
-### 🗄️Création de volume pour l'application :
+- Créer un dossier "db" dans le répertoire docker. 
 
-Lancer la commande :
 
-    docker volume create myapp_data
+- Créer ensuite un fichier .env et rajouter les lignes suivantes : \
+DB_USER=postgres \
+POSTGRES_USER=${DB_USER}
 
-### 🌐 Creation de network :
+### 🔑 Passons ensuite à la partie password
 
-Lancer la commande :
+- Créer un fichier db_password.txt et mettre uniquement le password de postgres en brut
 
-    docker network create appnetwork
+
+- Créer un fichier pgadmin_db_password.txt et mettre uniquement le password de pgadmin en brut
+
+## ✨ Génération du secret pour les passwords
+
+Exécuter les commandes : 
+
+    docker swarm init
+    docker secret create db_password ./db/db_password.txt
+    docker secret create pgadmin_db_password ./db/pgadmin_db_password.txt
+
+## 🐳⚙️ Docker compose
+
+Lancer les commandes : 
+
+    docker compose build
+    docker compose up -d
 
 \
 
 ## 🖥️ Frontend
 
-Aller dans le dossier Docker et faire la commande :
-    
-    docker build -t my-project-front ./frontend
-
-Lancer la commande avec le network qu'on a créé :
-
-    docker run -d -p 4300:80 --name=angular --network appnetwork my-project-front
-
-Enfin aller sur l'url :
+Aller sur l'url :
 
     http://localhost:4300/
 
@@ -42,29 +51,59 @@ Enfin aller sur l'url :
 
 ## 🛠️ Backend
 
-Aller dans le dossier Docker et faire la commande :
-
-    docker build -t my-project-back ./backend
-
-Lancer la commande avec le network qu'on a créé :
-
-    docker run -d -p 4000:3000 NODE_ENV=production --name=node-api --network appnetwork my-project-back
-
-Enfin aller sur l'url :
+Aller sur l'url :
 
     http://localhost:4000/
 
 \
 
-### 🗃️ Base de données
-Pour la connexion à la base de données avec les variables d'environnements et le volume qu'on a créé, lancer la commande :
+## 🗃️ Base de données
 
-    docker run --name=my-project-db -d -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=mydb -p 5431:5432 -v myapp_data:/var/lib/postgresql/data postgres:13
+Aller sur l'url :
 
-Avant de pouvoir se connecter à la base de données, il faut exécuter le container
+    http://localhost:8888
 
-    docker exec -it my-project-db bash 
+Mettre comme login : 
 
-Et enfin se connecter sur la base de données
+    abdessamad.bannouf@laposte.net
 
-    psql -U postgres -d mydb
+PS: vous pouvez changer de mail en changeant la valeur de PGADMIN_DEFAULT_EMAIL dans le docker compose
+
+Mettre le password correspondant.
+
+### Création de la database au sein de pgadmin
+
+Tout d'abord lancer les commandes : 
+
+    docker container ps
+    récupérer l'id du container project-db
+    docker inspect <id_du_container> | grep IPAddress
+
+- Récupérer la valeur IPAddress
+
+
+- Ensuite sur l'interface pgadmin cliquer sur Add New Server
+
+
+- Dans l'onglet général mettre un nom pour le serveur
+
+
+- Après cliquer sur l'onglet connection puis dans Host name mettre la valeur de l'IPAddress
+
+
+- Dans le champ port mettre : 5432
+
+
+- Dans le champ username mettre : postgres
+
+
+- Dans le champ password mettre le password correspondant
+
+
+## 🐳👀 Docker Watch
+
+Lancer la commande :
+
+    docker compose watch
+
+En modifiant ce qui se trouve dans le fichier backend, vous pourrez voir les modifications sur le terminal en temps réel.

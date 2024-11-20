@@ -1,2 +1,5 @@
 /frontend/node_modules
 /backend/node_modules
+/db/.env
+/db/db_password.txt
+/db/pgadmin_db_password.txt

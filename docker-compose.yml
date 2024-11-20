@@ -1,0 +1,82 @@
+services:
+  app:
+    container_name: project-back
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        NODE_ENV: "production"
+    image: myapp:latest
+    environment:
+      NODE_ENV: production
+    ports:
+      - "4000:3000"
+    restart: always
+    depends_on:
+      - db
+    #volumes:
+    #  - ./backend/node_modules:/usr/src/app/node_modules # Volume Docker standard pour les dépendances
+    #  - ./backend:/usr/src/app
+    develop:
+      watch:
+        - path: ./backend
+          action: sync+restart
+          x-initialSync: true
+          target: ./usr/src/app
+
+  db:
+    container_name: project-db
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    restart: always
+    env_file:
+      - ./db/.env
+    volumes:
+      - myapp_data:/var/lib/postgresql/data
+    secrets:
+      - db_password
+    environment:
+      POSTGRES_USER: POSTGRES_USER
+      POSTGRES_PASSWORD: /run/secrets/db_password
+
+  pgadmin:
+    container_name: project-db-interface
+    image: dpage/pgadmin4:latest
+    ports:
+      - "8888:80"
+    networks:
+      - appnetwork
+    depends_on:
+      - db
+    secrets:
+      - pgadmin_db_password
+    environment:
+      PGADMIN_DEFAULT_EMAIL: abdessamad.bannouf@laposte.net
+      PGADMIN_DEFAULT_PASSWORD_FILE: /run/secrets/pgadmin_db_password
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin/
+
+  angular-service:
+    container_name: project-ng
+    restart: always
+    ports:
+      - "4300:80"
+    build: ./frontend
+    volumes:
+      - './frontend:/usr/src/app'
+
+volumes:
+  myapp_data:
+  pgadmin-data:
+  node_modules:
+
+networks:
+  appnetwork:
+    driver: bridge
+
+secrets:
+  db_password:
+    file: ./db/db_password.txt
+  pgadmin_db_password:
+    file: ./db/pgadmin_db_password.txt
